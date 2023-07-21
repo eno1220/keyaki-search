@@ -1,11 +1,22 @@
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-import { Button } from "@mantine/core";
+import { TextInput, Button, Flex, Text } from "@mantine/core";
+import { useForm } from "@mantine/form";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
+  const form = useForm({
+    initialValues: {
+      text: "",
+    },
+  });
+
+  const onClick = () => {
+    window.open("https://www.google.com/search?q=" + form.values.text);
+  };
+
   return (
     <>
       <Head>
@@ -15,9 +26,34 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <Button variant="gradient" gradient={{ from: "indigo", to: "blue" }}>
-          検索
-        </Button>
+        <Flex mx="auto" align="center" maw={700} my={20} gap={10}>
+          <TextInput
+            radius="sm"
+            size="md"
+            sx={{
+              flex: 1,
+            }}
+            styles={(theme) => ({
+              input: {
+                backgroundColor: theme.colors.gray[1],
+                color: theme.colors.dark[5],
+                fontWeight: 700,
+                border: "none",
+              },
+            })}
+            {...form.getInputProps("text")}
+          />
+          <Button
+            w={100}
+            size="md"
+            radius="sm"
+            variant="gradient"
+            gradient={{ from: "indigo", to: "blue" }}
+            onClick={onClick}
+          >
+            検索
+          </Button>
+        </Flex>
       </main>
     </>
   );
