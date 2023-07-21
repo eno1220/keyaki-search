@@ -1,9 +1,17 @@
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-import { TextInput, Button, Flex, Text, Select } from "@mantine/core";
+import {
+  TextInput,
+  Button,
+  Flex,
+  Text,
+  Select,
+  MultiSelect,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
+import { useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,7 +19,7 @@ export default function Home() {
   const form = useForm({
     initialValues: {
       text: "",
-      site: "",
+      site: [],
       file: "",
       begin: "",
       end: "",
@@ -30,21 +38,32 @@ export default function Home() {
     },
   });
 
+  const [siteList, setSiteList] = useState([
+    {
+      value: "go.jp",
+      label: "go.jp",
+    },
+    {
+      value: "ac.jp",
+      label: "ac.jp",
+    },
+  ]);
+
   console.log(form.values);
 
   const onClick = () => {
     form.validate();
-    if (form.errors) {
+    if (form.errors && Object.keys(form.errors).length > 0) {
       return;
     }
     const params = new URLSearchParams();
+    const siteParams = form.values.site
+      .map((site) => `site:${site}`)
+      .join(" OR ");
     if (form.values.text) {
-      params.append("q", form.values.text);
+      params.append("q", form.values.text + " " + siteParams);
     } else {
       return;
-    }
-    if (form.values.site) {
-      params.append("as_sitesearch", form.values.site);
     }
     if (form.values.file) {
       params.append("as_filetype", form.values.file);
@@ -112,7 +131,11 @@ export default function Home() {
             borderRadius: theme.radius.sm,
           })}
         >
-          <TextInput
+          <MultiSelect
+            creatable
+            clearable
+            searchable
+            data={siteList}
             label="URL"
             radius="sm"
             size="sm"
@@ -127,7 +150,17 @@ export default function Home() {
                 color: theme.colors.dark[4],
                 fontWeight: 700,
               },
+              value: {
+                fontWeight: 700,
+                background: "white",
+              },
             })}
+            getCreateLabel={(value) => `+ add ${value}`}
+            onCreate={(query) => {
+              const item = { value: query, label: query };
+              setSiteList((current) => [...current, item]);
+              return item;
+            }}
             {...form.getInputProps("site")}
           />
           <Select
