@@ -41,11 +41,31 @@ export default function Home() {
   const [siteList, setSiteList] = useState([
     {
       value: "go.jp",
-      label: "go.jp",
+      label: "go.jp（政府機関）",
     },
     {
       value: "ac.jp",
-      label: "ac.jp",
+      label: "ac.jp（大学）",
+    },
+    {
+      value: "ed.jp",
+      label: "ed.jp（学校）",
+    },
+    {
+      value: "lg.jp",
+      label: "lg.jp（地方公共団体）",
+    },
+    {
+      value: "ja.wikipedia.org",
+      label: "ja.wikipedia.org（Wikipedia日本語版）",
+    },
+    {
+      value: "github.com",
+      label: "github.com（GitHub）",
+    },
+    {
+      value: "arxiv.org",
+      label: "arxiv.org（arXiv）",
     },
   ]);
 
@@ -136,7 +156,7 @@ export default function Home() {
             clearable
             searchable
             data={siteList}
-            label="URL"
+            label="URL/ドメイン"
             radius="sm"
             size="sm"
             styles={(theme) => ({
@@ -153,6 +173,9 @@ export default function Home() {
               value: {
                 fontWeight: 700,
                 background: "white",
+              },
+              item: {
+                fontWeight: 700,
               },
             })}
             getCreateLabel={(value) => `+ add ${value}`}
