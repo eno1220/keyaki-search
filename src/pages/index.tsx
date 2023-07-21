@@ -17,8 +17,13 @@ export default function Home() {
       end: "",
     },
     validate: {
+      text: (value) => {
+        if (!value) {
+          return "検索ワードを入力してください";
+        }
+      },
       begin: (value) => {
-        if (value && form.values.end && value > form.values.end) {
+        if (value && value > form.values.end) {
           return "開始日は終了日より前に設定してください";
         }
       },
@@ -29,12 +34,14 @@ export default function Home() {
 
   const onClick = () => {
     form.validate();
-    if (form.errors.begin) {
+    if (form.errors) {
       return;
     }
     const params = new URLSearchParams();
     if (form.values.text) {
       params.append("q", form.values.text);
+    } else {
+      return;
     }
     if (form.values.site) {
       params.append("as_sitesearch", form.values.site);
@@ -63,7 +70,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <Flex mx="auto" align="center" maw={700} my={20} gap={10}>
+        <Flex mx="auto" align="center" maw={700} my={20} gap={10} px={4}>
           <TextInput
             radius="sm"
             size="md"
@@ -158,7 +165,11 @@ export default function Home() {
               { value: "ppt", label: "PowerPoint(.ppt)" },
             ]}
           />
-          <Flex align="center" gap={10}>
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            align="center"
+            gap={10}
+          >
             <DateInput
               clearable
               label="開始日"
