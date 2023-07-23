@@ -1,13 +1,14 @@
 import Head from "next/head";
-import Image from "next/image";
 import { Inter } from "next/font/google";
 import {
   TextInput,
   Button,
   Flex,
-  Text,
   Select,
   MultiSelect,
+  Badge,
+  Text,
+  Container,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
@@ -15,10 +16,37 @@ import { useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const MainOption = ({ form, value }: { form: any; value: string }) => (
+  <Flex align="center" gap={10}>
+    <Badge radius="sm" w={80}>
+      {value.toUpperCase()}
+    </Badge>
+    <TextInput
+      radius="sm"
+      size="sm"
+      sx={{
+        flex: 1,
+      }}
+      styles={(theme) => ({
+        input: {
+          backgroundColor: theme.colors.gray[1],
+          color: theme.colors.dark[5],
+          fontWeight: 700,
+          border: "none",
+        },
+      })}
+      {...form.getInputProps(value)}
+    />
+  </Flex>
+);
+
 export default function Home() {
   const form = useForm({
     initialValues: {
       text: "",
+      and: "",
+      or: "",
+      exclude: "",
       site: [],
       file: "",
       begin: "",
@@ -56,20 +84,18 @@ export default function Home() {
       label: "lg.jp（地方公共団体）",
     },
     {
-      value: "ja.wikipedia.org",
-      label: "ja.wikipedia.org（Wikipedia日本語版）",
+      value: "https://cir.nii.ac.jp/",
+      label: "cir.nii.ac.jp（CiNii Research/学術論文）",
     },
     {
-      value: "github.com",
-      label: "github.com（GitHub）",
+      value: "https://www.jstage.jst.go.jp/",
+      label: "jstage.jst.go.jp（J-STAGE/学術論文）",
     },
     {
-      value: "arxiv.org",
-      label: "arxiv.org（arXiv）",
+      value: "https://dl.ndl.go.jp/",
+      label: "dl.ndl.go.jp（国立国会図書館デジタルコレクション）",
     },
   ]);
-
-  console.log(form.values);
 
   const onClick = () => {
     form.validate();
@@ -77,14 +103,33 @@ export default function Home() {
       return;
     }
     const params = new URLSearchParams();
-    const siteParams = form.values.site
-      .map((site) => `site:${site}`)
-      .join(" OR ");
+    let paramsText = "";
     if (form.values.text) {
-      params.append("q", form.values.text + " " + siteParams);
+      paramsText = form.values.text;
     } else {
       return;
     }
+    if (form.values.and) {
+      const andParams = form.values.and.split(" ").map((and) => ` AND ${and}`);
+      paramsText += andParams.join("");
+    }
+    if (form.values.or) {
+      const orParams = form.values.or.split(" ").map((or) => ` OR ${or}`);
+      paramsText += orParams.join("");
+    }
+    if (form.values.exclude) {
+      const excludeParams = form.values.exclude
+        .split(" ")
+        .map((exclude) => ` -${exclude}`);
+      paramsText += excludeParams.join("");
+    }
+    if (form.values.site) {
+      const siteParams = form.values.site
+        .map((site) => ` site:${site}`)
+        .join(" OR");
+      paramsText += siteParams;
+    }
+    params.append("q", paramsText);
     if (form.values.file) {
       params.append("as_filetype", form.values.file);
     }
@@ -98,8 +143,6 @@ export default function Home() {
     window.open(url, "_blank");
   };
 
-  // todo: UI部分をコンポーネントにして切り出す
-  // todo: もっと様々な検索条件を追加する
   return (
     <>
       <Head>
@@ -109,130 +152,14 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <Flex mx="auto" align="center" maw={700} my={20} gap={10} px={4}>
-          <TextInput
-            radius="sm"
-            size="md"
-            sx={{
-              flex: 1,
-            }}
-            styles={(theme) => ({
-              input: {
-                backgroundColor: theme.colors.gray[1],
-                color: theme.colors.dark[5],
-                fontWeight: 700,
-                border: "none",
-              },
-            })}
-            {...form.getInputProps("text")}
-          />
-          <Button
-            w={100}
-            size="md"
-            radius="sm"
-            variant="gradient"
-            gradient={{ from: "indigo", to: "blue" }}
-            onClick={onClick}
-          >
-            検索
-          </Button>
-        </Flex>
-        <Flex
-          direction="column"
-          mx="auto"
-          maw={700}
-          px={20}
-          py={20}
-          gap={10}
-          sx={(theme) => ({
-            borderStyle: "solid",
-            borderWidth: 1,
-            borderColor: theme.colors.gray[2],
-            borderRadius: theme.radius.sm,
-          })}
-        >
-          <MultiSelect
-            creatable
-            clearable
-            searchable
-            data={siteList}
-            label="URL/ドメイン"
-            radius="sm"
-            size="sm"
-            styles={(theme) => ({
-              input: {
-                backgroundColor: theme.colors.gray[1],
-                color: theme.colors.dark[5],
-                fontWeight: 700,
-                border: "none",
-              },
-              label: {
-                color: theme.colors.dark[4],
-                fontWeight: 700,
-              },
-              value: {
-                fontWeight: 700,
-                background: "white",
-              },
-              item: {
-                fontWeight: 700,
-              },
-            })}
-            getCreateLabel={(value) => `+ add ${value}`}
-            onCreate={(query) => {
-              const item = { value: query, label: query };
-              setSiteList((current) => [...current, item]);
-              return item;
-            }}
-            {...form.getInputProps("site")}
-          />
-          <Select
-            clearable
-            label="ファイル形式"
-            radius="sm"
-            size="sm"
-            styles={(theme) => ({
-              input: {
-                backgroundColor: theme.colors.gray[1],
-                color: theme.colors.dark[5],
-                fontWeight: 700,
-                border: "none",
-              },
-              label: {
-                color: theme.colors.dark[4],
-                fontWeight: 700,
-              },
-              item: {
-                fontWeight: 700,
-                "&[data-selected]": {
-                  background: theme.fn.linearGradient(
-                    90,
-                    theme.colors.indigo[5],
-                    theme.colors.blue[5]
-                  ),
-                },
-              },
-            })}
-            {...form.getInputProps("file")}
-            data={[
-              { value: "pdf", label: "PDF(.pdf)" },
-              { value: "doc", label: "Word(.doc)" },
-              { value: "xls", label: "Excel(.xls)" },
-              { value: "ppt", label: "PowerPoint(.ppt)" },
-            ]}
-          />
-          <Flex
-            direction={{ base: "column", md: "row" }}
-            align="center"
-            gap={10}
-          >
-            <DateInput
-              clearable
-              label="開始日"
+        <Container size="sm">
+          <Flex mx="auto" align="center" my={20} gap={10} px={4}>
+            <TextInput
               radius="sm"
-              size="sm"
-              valueFormat="YYYY-MM-DD"
-              w="100%"
+              size="md"
+              sx={{
+                flex: 1,
+              }}
               styles={(theme) => ({
                 input: {
                   backgroundColor: theme.colors.gray[1],
@@ -240,36 +167,153 @@ export default function Home() {
                   fontWeight: 700,
                   border: "none",
                 },
-                label: {
-                  color: theme.colors.dark[4],
-                  fontWeight: 700,
-                },
               })}
-              {...form.getInputProps("begin")}
+              {...form.getInputProps("text")}
             />
-            <DateInput
-              clearable
-              label="終了日"
+            <Button
+              w={100}
+              size="md"
               radius="sm"
-              size="sm"
-              valueFormat="YYYY-MM-DD"
-              w="100%"
-              styles={(theme) => ({
-                input: {
-                  backgroundColor: theme.colors.gray[1],
-                  color: theme.colors.dark[5],
-                  fontWeight: 700,
-                  border: "none",
-                },
-                label: {
-                  color: theme.colors.dark[4],
-                  fontWeight: 700,
-                },
-              })}
-              {...form.getInputProps("end")}
-            />
+              variant="gradient"
+              gradient={{ from: "indigo", to: "blue" }}
+              onClick={onClick}
+            >
+              検索
+            </Button>
           </Flex>
-        </Flex>
+          <Flex direction="column" gap={8}>
+            <MainOption form={form} value="and" />
+            <MainOption form={form} value="or" />
+            <MainOption form={form} value="exclude" />
+            <MultiSelect
+              creatable
+              clearable
+              searchable
+              data={siteList}
+              label="URL/ドメイン"
+              radius="sm"
+              size="sm"
+              styles={(theme) => ({
+                input: {
+                  backgroundColor: theme.colors.gray[1],
+                  color: theme.colors.dark[5],
+                  fontWeight: 700,
+                  border: "none",
+                },
+                label: {
+                  color: theme.colors.dark[4],
+                  fontWeight: 700,
+                },
+                value: {
+                  fontWeight: 700,
+                  background: "white",
+                },
+                item: {
+                  fontWeight: 700,
+                },
+              })}
+              getCreateLabel={(value) => `+ add ${value}`}
+              onCreate={(query) => {
+                const item = { value: query, label: query };
+                setSiteList((current) => [...current, item]);
+                return item;
+              }}
+              {...form.getInputProps("site")}
+            />
+            <Select
+              clearable
+              label="ファイル形式"
+              radius="sm"
+              size="sm"
+              styles={(theme) => ({
+                input: {
+                  backgroundColor: theme.colors.gray[1],
+                  color: theme.colors.dark[5],
+                  fontWeight: 700,
+                  border: "none",
+                },
+                label: {
+                  color: theme.colors.dark[4],
+                  fontWeight: 700,
+                },
+                item: {
+                  fontWeight: 700,
+                  "&[data-selected]": {
+                    background: theme.fn.linearGradient(
+                      90,
+                      theme.colors.indigo[5],
+                      theme.colors.blue[5]
+                    ),
+                  },
+                },
+              })}
+              {...form.getInputProps("file")}
+              data={[
+                { value: "pdf", label: "PDF(.pdf)" },
+                { value: "doc", label: "Word(.doc)" },
+                { value: "xls", label: "Excel(.xls)" },
+                { value: "ppt", label: "PowerPoint(.ppt)" },
+              ]}
+            />
+            <Flex
+              direction={{ base: "column", sm: "row" }}
+              align="center"
+              gap={10}
+            >
+              <DateInput
+                clearable
+                label="開始日"
+                radius="sm"
+                size="sm"
+                valueFormat="YYYY-MM-DD"
+                w="100%"
+                styles={(theme) => ({
+                  input: {
+                    backgroundColor: theme.colors.gray[1],
+                    color: theme.colors.dark[5],
+                    fontWeight: 700,
+                    border: "none",
+                  },
+                  label: {
+                    color: theme.colors.dark[4],
+                    fontWeight: 700,
+                  },
+                })}
+                {...form.getInputProps("begin")}
+              />
+              <DateInput
+                clearable
+                label="終了日"
+                radius="sm"
+                size="sm"
+                valueFormat="YYYY-MM-DD"
+                w="100%"
+                styles={(theme) => ({
+                  input: {
+                    backgroundColor: theme.colors.gray[1],
+                    color: theme.colors.dark[5],
+                    fontWeight: 700,
+                    border: "none",
+                  },
+                  label: {
+                    color: theme.colors.dark[4],
+                    fontWeight: 700,
+                  },
+                })}
+                {...form.getInputProps("end")}
+              />
+            </Flex>
+            <Text
+              sx={(theme) => ({
+                color: theme.colors.dark[3],
+                fontSize: theme.fontSizes.xs,
+                fontWeight: 700,
+              })}
+            >
+              AND / OR / EXCLUDE は半角スペースで区切ることで複数指定できます。
+            </Text>
+          </Flex>
+        </Container>
       </main>
     </>
   );
